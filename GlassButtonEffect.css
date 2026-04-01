@@ -1,0 +1,191 @@
+/*
+ * for reference only
+ * glass-button.css
+ * Classic glass button effect — white semi-ellipse overlay at 74/255 opacity
+ *
+ * USAGE:
+ *   Add class="glass-btn" to any <button> or <a> element.
+ *
+ * VARIANTS (add alongside glass-btn):
+ *   glass-btn--dark     — near-black base (default)
+ *   glass-btn--mid      — mid-tone dark base
+ *   glass-btn--light    — light/silver base
+ *   glass-btn--blue     — deep blue base
+ *   glass-btn--red      — deep red base
+ *   glass-btn--green    — deep green base
+ *
+ * SIZE MODIFIERS:
+ *   glass-btn--sm       — small  (30px height)
+ *   glass-btn--md       — medium (38px height, default)
+ *   glass-btn--lg       — large  (48px height)
+ *   glass-btn--xl       — xl     (58px height)
+ *
+ * SHAPE:
+ *   glass-btn--pill     — fully rounded ends
+ *   glass-btn--square   — no border radius
+ *
+ * HOW THE EFFECT WORKS:
+ *   A white circle (border-radius: 50%) is positioned above the button's
+ *   vertical center via ::before, then clipped by overflow: hidden.
+ *   This produces a bottom-half semi-ellipse arc across the top of the button.
+ *   Opacity is set to calc(74/255) ≈ 0.29 to match the classic OS X glass look.
+ *
+ * CUSTOMIZATION:
+ *   Override --glass-bg, --glass-border, --glass-color on the element directly.
+ *   The ::before ellipse inherits button width automatically via position/overflow.
+ */
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+
+.glass-btn {
+  --glass-bg:       linear-gradient(180deg, #3a3a4a 0%, #1e1e2e 100%);
+  --glass-border:   rgba(255, 255, 255, 0.25);
+  --glass-color:    #ddd;
+  --glass-radius:   6px;
+  --glass-height:   38px;
+  --glass-px:       24px;
+  --glass-font:     13px;
+
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 0 var(--glass-px);
+  height: var(--glass-height);
+
+  border-radius: var(--glass-radius);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+
+  color: var(--glass-color);
+  font-size: var(--glass-font);
+  font-family: inherit;
+  text-decoration: none;
+
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The glass arc — white circle clipped to top half */
+.glass-btn::before {
+  content: '';
+  position: absolute;
+
+  /* top: -(height/2) centers the circle's equator at the button's top edge,
+     so only its bottom half is visible = the arc spans full width at midpoint */
+  top: calc(var(--glass-height) / -2);
+  left: -10%;
+  width: 120%;
+  height: var(--glass-height);
+
+  background: white;
+  border-radius: 50%;
+  opacity: calc(74 / 255); /* 74/255 ≈ 0.29 — the classic glass highlight value */
+  pointer-events: none;
+}
+
+/* ── States ───────────────────────────────────────────────────────── */
+
+.glass-btn:hover {
+  filter: brightness(1.15);
+}
+
+.glass-btn:active {
+  filter: brightness(0.9);
+  transform: translateY(1px);
+}
+
+.glass-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.glass-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Color Variants ───────────────────────────────────────────────── */
+
+.glass-btn--dark {
+  --glass-bg:     linear-gradient(180deg, #3a3a4a 0%, #1e1e2e 100%);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-color:  #ddd;
+}
+
+.glass-btn--mid {
+  --glass-bg:     linear-gradient(180deg, #555566 0%, #33333f 100%);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-color:  #eee;
+}
+
+.glass-btn--light {
+  --glass-bg:     linear-gradient(180deg, #e8e8ec 0%, #c0c0cc 100%);
+  --glass-border: rgba(0, 0, 0, 0.18);
+  --glass-color:  #222;
+}
+
+.glass-btn--light::before {
+  background: white;
+  opacity: 0.55;
+}
+
+.glass-btn--blue {
+  --glass-bg:     linear-gradient(180deg, #1e3a6e 0%, #0d1f40 100%);
+  --glass-border: rgba(100, 160, 255, 0.35);
+  --glass-color:  #b8d4ff;
+}
+
+.glass-btn--red {
+  --glass-bg:     linear-gradient(180deg, #6e1e1e 0%, #3a0d0d 100%);
+  --glass-border: rgba(255, 120, 120, 0.35);
+  --glass-color:  #ffb8b8;
+}
+
+.glass-btn--green {
+  --glass-bg:     linear-gradient(180deg, #1e5c2e 0%, #0d2e18 100%);
+  --glass-border: rgba(100, 220, 130, 0.35);
+  --glass-color:  #a8f0b8;
+}
+
+/* ── Size Modifiers ───────────────────────────────────────────────── */
+
+.glass-btn--sm {
+  --glass-height: 30px;
+  --glass-px:     16px;
+  --glass-font:   11px;
+}
+
+.glass-btn--md {
+  --glass-height: 38px;
+  --glass-px:     24px;
+  --glass-font:   13px;
+}
+
+.glass-btn--lg {
+  --glass-height: 48px;
+  --glass-px:     32px;
+  --glass-font:   15px;
+}
+
+.glass-btn--xl {
+  --glass-height: 58px;
+  --glass-px:     40px;
+  --glass-font:   17px;
+}
+
+/* ── Shape Modifiers ──────────────────────────────────────────────── */
+
+.glass-btn--pill {
+  --glass-radius: 9999px;
+}
+
+.glass-btn--square {
+  --glass-radius: 2px;
+}
