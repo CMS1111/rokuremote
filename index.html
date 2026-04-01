@@ -1,1 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Roku Remote</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --bg:           #0e0e1a;
+  --bg2:          #141420;
+  --bg3:          #1a1a28;
+  --border:       rgba(255,255,255,0.08);
+  --border-hi:    rgba(255,255,255,0.18);
+  --text:         #ccc;
+  --text-dim:     #555;
+  --text-hint:    #333;
+  --accent:       #4a90e2;
+  --accent-dim:   rgba(74,144,226,0.15);
+  --success:      #4caf50;
+  --warn:         #ff9800;
+  --error:        #f44336;
+  --radius:       8px;
+  --font:         'JetBrains Mono', 'Consolas', monospace;
+
+  /* glass button */
+  --gbtn-h:       52px;
+  --gbtn-r:       8px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  font-family: var(--font);
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════════════════════ */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 12px 60px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DISCOVERY BAR
+══════════════════════════════════════════════════════════════════ */
+#discovery-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+#device-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+#status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+#status-dot.searching { background: var(--warn); animation: pulse 1s infinite; }
+#status-dot.connected { background: var(--success); }
+#status-dot.error     { background: var(--error); }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+#device-name {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.06em;
+}
+#device-name b { color: var(--text); font-weight: 500; }
+
+#ip-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#ip-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 5px 10px;
+  width: 132px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#ip-input:focus { border-color: var(--accent); }
+#ip-input::placeholder { color: var(--text-hint); }
+
+.bar-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  transition: border-color 0.2s, color 0.2s;
+}
+.bar-btn:hover { border-color: var(--border-hi); color: var(--text); }
+
+#device-tier {
+  font-size: 9px;
+  color: var(--text-hint);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid var(--text-hint);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FEEDBACK TOAST
+══════════════════════════════════════════════════════════════════ */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  padding: 8px 18px;
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.06em;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+#toast.ok   { border-color: rgba(76,175,80,0.4); color: #a5d6a7; }
+#toast.fail { border-color: rgba(244,67,54,0.4);  color: #ef9a9a; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION HEADERS
+══════════════════════════════════════════════════════════════════ */
+.section-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--text-hint);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin: 20px 0 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BUTTON GRID
+══════════════════════════════════════════════════════════════════ */
+.btn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+/* wider grid for streaming apps */
+.btn-grid.wide {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+/* tablet: 3 cols */
+.tier-tablet .btn-grid        { grid-template-columns: repeat(3, 1fr); }
+.tier-tablet .btn-grid.wide   { grid-template-columns: repeat(3, 1fr); }
+
+/* mobile: 2 cols, larger touch targets */
+.tier-mobile .btn-grid        { grid-template-columns: repeat(2, 1fr); }
+.tier-mobile .btn-grid.wide   { grid-template-columns: repeat(2, 1fr); }
+.tier-mobile                  { --gbtn-h: 60px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   GLASS BUTTON ROW
+══════════════════════════════════════════════════════════════════ */
+.btn-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.018);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none; /* handled by pointer events */
+}
+.btn-row:hover  { background: rgba(255,255,255,0.035); border-color: var(--border-hi); }
+.btn-row.active { background: rgba(255,255,255,0.06);  border-color: var(--border-hi); }
+.btn-row.flash  { animation: btn-flash 0.22s ease; }
+
+@keyframes btn-flash {
+  0%   { background: rgba(74,144,226,0.25); border-color: rgba(74,144,226,0.5); }
+  100% { background: rgba(255,255,255,0.018); border-color: var(--border); }
+}
+
+.btn-row.repeat-active { background: rgba(255,160,30,0.12); border-color: rgba(255,160,30,0.3); }
+
+.btn-svg-wrap {
+  flex-shrink: 0;
+  width: var(--gbtn-h);
+  height: var(--gbtn-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.btn-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.03em;
+}
+
+.btn-cmd {
+  font-size: 9px;
+  color: var(--text-hint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-cmd span { color: #2a3a4a; }
+
+.btn-note {
+  font-size: 9px;
+  color: var(--text-hint);
+  opacity: 0.6;
+}
+
+/* hold indicator bar */
+.btn-row .hold-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: var(--warn);
+  border-radius: 0 0 var(--radius) var(--radius);
+  width: 0;
+  transition: none;
+}
+.btn-row { position: relative; overflow: hidden; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SVG GLASS BUTTON
+══════════════════════════════════════════════════════════════════ */
+.rbtn { overflow: visible; display: block; }
+.rbtn .bg { transition: filter 0.1s; }
+.btn-row:hover  .rbtn .bg { filter: brightness(1.2); }
+.btn-row.active .rbtn .bg { filter: brightness(0.85); }
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYBOARD DRAWER
+══════════════════════════════════════════════════════════════════ */
+#kb-drawer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border-hi);
+  padding: 12px 16px 20px;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  z-index: 50;
+  max-width: 680px;
+  margin: 0 auto;
+}
+#kb-drawer.open { transform: translateY(0); }
+
+#kb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+#kb-header span { font-size: 10px; letter-spacing: 0.1em; color: var(--text-dim); }
+#kb-close { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+#kb-close:hover { color: var(--text); }
+
+#kb-display {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text);
+  min-height: 36px;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  word-break: break-all;
+}
+#kb-display .cursor {
+  display: inline-block;
+  width: 2px; height: 14px;
+  background: var(--accent);
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 1px;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+#kb-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+#kb-text-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+}
+#kb-text-input:focus { border-color: var(--accent); }
+#kb-send-btn {
+  background: var(--accent-dim);
+  border: 1px solid rgba(74,144,226,0.3);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 8px 14px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+#kb-send-btn:hover { background: rgba(74,144,226,0.25); }
+
+#kb-special-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.kb-special {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: border-color 0.15s, color 0.15s;
+}
+.kb-special:hover { border-color: var(--border-hi); color: var(--text); }
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUT HINTS  (desktop only)
+══════════════════════════════════════════════════════════════════ */
+.kbd {
+  display: inline-block;
+  font-size: 9px;
+  color: var(--text-hint);
+  border: 1px solid var(--text-hint);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tier-desktop .kbd { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TIER-SPECIFIC ADJUSTMENTS
+══════════════════════════════════════════════════════════════════ */
+/* tablet/mobile: hide kbd hints */
+.tier-tablet .kbd,
+.tier-mobile .kbd { display: none; }
+
+/* mobile: bottom-fixed keyboard toggle */
+#kb-toggle-fab {
+  display: none;
+  position: fixed;
+  bottom: 16px; right: 16px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid rgba(74,144,226,0.4);
+  color: var(--accent);
+  font-size: 20px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 49;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.tier-mobile #kb-toggle-fab,
+.tier-tablet #kb-toggle-fab { display: flex; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── DISCOVERY BAR ──────────────────────────────────────────── -->
+  <div id="discovery-bar">
+    <div id="device-status">
+      <div id="status-dot"></div>
+      <div id="device-name">Not connected</div>
+    </div>
+    <div id="ip-form">
+      <input id="ip-input" type="text" placeholder="192.168.1.x" maxlength="15" autocomplete="off" spellcheck="false">
+      <button class="bar-btn" onclick="connectManual()">Connect</button>
+      <button class="bar-btn" onclick="startDiscovery()">Scan</button>
+    </div>
+    <div id="device-tier">—</div>
+  </div>
+
+  <!-- ── NAVIGATION ────────────────────────────────────────────── -->
+  <div class="section-label">Navigation</div>
+  <div class="btn-grid">
+    <div class="btn-row" data-cmd="keypress/Up" data-repeat="true" data-label="Up">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-up" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-up"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-up)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-up)"/></g><text x="26" y="38" text-anchor="middle" font-size="28" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">▲</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Up <span class="kbd">↑</span></div><div class="btn-cmd">keypress/<span>Up</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Down" data-repeat="true" data-label="Down">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-dn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-dn"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-dn)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-dn)"/></g><text x="26" y="38" text-anchor="middle" font-size="28" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">▼</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Down <span class="kbd">↓</span></div><div class="btn-cmd">keypress/<span>Down</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Left" data-repeat="true" data-label="Left">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-lt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-lt"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-lt)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-lt)"/></g><text x="26" y="38" text-anchor="middle" font-size="28" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">◀</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Left <span class="kbd">←</span></div><div class="btn-cmd">keypress/<span>Left</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Right" data-repeat="true" data-label="Right">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-rt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-rt"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-rt)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-rt)"/></g><text x="26" y="38" text-anchor="middle" font-size="28" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">▶</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Right <span class="kbd">→</span></div><div class="btn-cmd">keypress/<span>Right</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Select" data-label="Select">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-sel" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a4a2a"/><stop offset="100%" stop-color="#0e1e0e"/></linearGradient><clipPath id="c-sel"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-sel)" stroke="rgba(100,220,100,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-sel)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(150,255,150,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⊙</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Select / OK <span class="kbd">Enter</span></div><div class="btn-cmd">keypress/<span>Select</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Home" data-label="Home">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-hm" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-hm"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-hm)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-hm)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⌂</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Home <span class="kbd">H</span></div><div class="btn-cmd">keypress/<span>Home</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Back" data-label="Back">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-bk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-bk"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-bk)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-bk)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">↩</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Back <span class="kbd">Esc</span></div><div class="btn-cmd">keypress/<span>Back</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Info" data-label="Info/Options">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-inf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-inf"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-inf)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-inf)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">☰</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Options <span class="kbd">I</span></div><div class="btn-cmd">keypress/<span>Info</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Search" data-label="Search">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-srch" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-srch"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-srch)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-srch)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⌕</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Search <span class="kbd">S</span></div><div class="btn-cmd">keypress/<span>Search</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/InstantReplay" data-label="Instant Replay">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-ir"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-ir)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-ir)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">↺</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Replay</div><div class="btn-cmd">keypress/<span>InstantReplay</span></div><div class="btn-note">back 10s</div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Enter" data-label="Enter">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-en" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-en"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-en)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-en)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏎</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Enter</div><div class="btn-cmd">keypress/<span>Enter</span></div><div class="btn-note">confirms text field</div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Backspace" data-repeat="true" data-label="Backspace">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-bs"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-bs)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-bs)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⌫</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Backspace</div><div class="btn-cmd">keypress/<span>Backspace</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+  </div>
+
+  <!-- ── PLAYBACK ───────────────────────────────────────────────── -->
+  <div class="section-label">Playback</div>
+  <div class="btn-grid">
+    <div class="btn-row" data-cmd="keypress/Play" data-label="Play/Pause">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a4a3a"/><stop offset="100%" stop-color="#0e1e16"/></linearGradient><clipPath id="c-pp"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pp)" stroke="rgba(100,220,160,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pp)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(120,255,180,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏯</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Play / Pause <span class="kbd">Space</span></div><div class="btn-cmd">keypress/<span>Play</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Rev" data-repeat="true" data-label="Rewind">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-rw" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-rw"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-rw)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-rw)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏪</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Rewind</div><div class="btn-cmd">keypress/<span>Rev</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Fwd" data-repeat="true" data-label="Fast Forward">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-ff" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-ff"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-ff)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-ff)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏩</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Fast Forward</div><div class="btn-cmd">keypress/<span>Fwd</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+  </div>
+
+  <!-- ── VOLUME & POWER ─────────────────────────────────────────── -->
+  <div class="section-label">Volume &amp; Power <span style="font-size:9px;opacity:0.5;">— ★ Roku TV only</span></div>
+  <div class="btn-grid">
+    <div class="btn-row" data-cmd="keypress/VolumeUp" data-repeat="true" data-label="Volume Up">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-vu" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/></linearGradient><clipPath id="c-vu"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-vu)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-vu)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(150,200,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">🔊</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Vol Up ★ <span class="kbd">+</span></div><div class="btn-cmd">keypress/<span>VolumeUp</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/VolumeDown" data-repeat="true" data-label="Volume Down">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-vd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/></linearGradient><clipPath id="c-vd"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-vd)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-vd)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(150,200,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">🔉</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Vol Down ★ <span class="kbd">-</span></div><div class="btn-cmd">keypress/<span>VolumeDown</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/VolumeMute" data-label="Mute">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-mt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/></linearGradient><clipPath id="c-mt"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-mt)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-mt)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(150,200,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">🔇</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Mute ★ <span class="kbd">M</span></div><div class="btn-cmd">keypress/<span>VolumeMute</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/Power" data-label="Power Toggle">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pw" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a1e1e"/><stop offset="100%" stop-color="#2e0a0a"/></linearGradient><clipPath id="c-pw"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pw)" stroke="rgba(255,100,100,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pw)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(255,150,150,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏻</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Power ★</div><div class="btn-cmd">keypress/<span>Power</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/PowerOn" data-label="Power On">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pon" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a5a1e"/><stop offset="100%" stop-color="#0e2a0a"/></linearGradient><clipPath id="c-pon"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pon)" stroke="rgba(100,220,100,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pon)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(120,255,120,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏼</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Power On ★</div><div class="btn-cmd">keypress/<span>PowerOn</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/PowerOff" data-label="Power Off">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pof" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a1e1e"/><stop offset="100%" stop-color="#2e0a0a"/></linearGradient><clipPath id="c-pof"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pof)" stroke="rgba(255,100,100,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pof)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(255,120,120,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">⏽</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Power Off ★</div><div class="btn-cmd">keypress/<span>PowerOff</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/ChannelUp" data-repeat="true" data-label="Channel Up">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-cu" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/></linearGradient><clipPath id="c-cu"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-cu)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-cu)"/></g><text x="26" y="34" text-anchor="middle" font-size="13" fill="rgba(150,200,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">CH▲</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Chan Up ★</div><div class="btn-cmd">keypress/<span>ChannelUp</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/ChannelDown" data-repeat="true" data-label="Channel Down">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-cd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/></linearGradient><clipPath id="c-cd"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-cd)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-cd)"/></g><text x="26" y="34" text-anchor="middle" font-size="13" fill="rgba(150,200,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">CH▼</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Chan Down ★</div><div class="btn-cmd">keypress/<span>ChannelDown</span></div></div>
+      <div class="hold-bar"></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/FindRemote" data-label="Find Remote">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-fr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/></linearGradient><clipPath id="c-fr"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-fr)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-fr)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(210,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">📡</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Find Remote</div><div class="btn-cmd">keypress/<span>FindRemote</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── HDMI INPUTS ────────────────────────────────────────────── -->
+  <div class="section-label">HDMI Inputs <span style="font-size:9px;opacity:0.5;">— ★ Roku TV only</span></div>
+  <div class="btn-grid">
+    <div class="btn-row" data-cmd="keypress/InputHDMI1" data-label="HDMI 1">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-h1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/></linearGradient><clipPath id="c-h1"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-h1)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h1)"/></g><text x="26" y="34" text-anchor="middle" font-size="14" fill="rgba(160,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">HDMI1</text></svg></div>
+      <div class="btn-info"><div class="btn-name">HDMI 1 ★</div><div class="btn-cmd">keypress/<span>InputHDMI1</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/InputHDMI2" data-label="HDMI 2">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-h2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/></linearGradient><clipPath id="c-h2"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-h2)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h2)"/></g><text x="26" y="34" text-anchor="middle" font-size="14" fill="rgba(160,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">HDMI2</text></svg></div>
+      <div class="btn-info"><div class="btn-name">HDMI 2 ★</div><div class="btn-cmd">keypress/<span>InputHDMI2</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/InputHDMI3" data-label="HDMI 3">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-h3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/></linearGradient><clipPath id="c-h3"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-h3)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h3)"/></g><text x="26" y="34" text-anchor="middle" font-size="14" fill="rgba(160,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">HDMI3</text></svg></div>
+      <div class="btn-info"><div class="btn-name">HDMI 3 ★</div><div class="btn-cmd">keypress/<span>InputHDMI3</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/InputHDMI4" data-label="HDMI 4">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-h4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/></linearGradient><clipPath id="c-h4"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-h4)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h4)"/></g><text x="26" y="34" text-anchor="middle" font-size="14" fill="rgba(160,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">HDMI4</text></svg></div>
+      <div class="btn-info"><div class="btn-name">HDMI 4 ★</div><div class="btn-cmd">keypress/<span>InputHDMI4</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/InputAV1" data-label="AV Input">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-av" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/></linearGradient><clipPath id="c-av"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-av)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-av)"/></g><text x="26" y="36" text-anchor="middle" font-size="18" fill="rgba(160,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;font-weight:600;">AV</text></svg></div>
+      <div class="btn-info"><div class="btn-name">AV Input ★</div><div class="btn-cmd">keypress/<span>InputAV1</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="keypress/InputTuner" data-label="Tuner">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-tv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/></linearGradient><clipPath id="c-tv"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-tv)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-tv)"/></g><text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(160,210,255,0.9)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">📺</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Tuner ★</div><div class="btn-cmd">keypress/<span>InputTuner</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── STREAMING APPS ─────────────────────────────────────────── -->
+  <div class="section-label">Streaming Apps</div>
+  <div class="btn-grid wide">
+    <div class="btn-row" data-cmd="launch/12" data-label="Netflix">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-nf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6a1010"/><stop offset="100%" stop-color="#300808"/></linearGradient><clipPath id="c-nf"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-nf)" stroke="rgba(220,80,80,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-nf)"/></g><text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(255,140,140,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">N</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Netflix</div><div class="btn-cmd">launch/<span>12</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/837" data-label="YouTube">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-yt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a3a00"/><stop offset="100%" stop-color="#2a1a00"/></linearGradient><clipPath id="c-yt"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-yt)" stroke="rgba(220,160,40,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-yt)"/></g><text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(255,200,80,0.95)" pointer-events="none" style="font-family:system-ui,sans-serif;user-select:none;">▶</text></svg></div>
+      <div class="btn-info"><div class="btn-name">YouTube</div><div class="btn-cmd">launch/<span>837</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/13" data-label="Prime Video">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a2a4a"/><stop offset="100%" stop-color="#041220"/></linearGradient><clipPath id="c-pv"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pv)" stroke="rgba(60,160,220,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pv)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(80,180,255,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Prime Video</div><div class="btn-cmd">launch/<span>13</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/2285" data-label="Hulu">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-hu" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e3a1a"/><stop offset="100%" stop-color="#061a0c"/></linearGradient><clipPath id="c-hu"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-hu)" stroke="rgba(60,200,100,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-hu)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(80,220,120,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">H</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Hulu</div><div class="btn-cmd">launch/<span>2285</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/291097" data-label="Disney+">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-dp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e1a5a"/><stop offset="100%" stop-color="#060a2e"/></linearGradient><clipPath id="c-dp"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-dp)" stroke="rgba(80,120,255,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-dp)"/></g><text x="26" y="38" text-anchor="middle" font-size="20" fill="rgba(140,180,255,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">D+</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Disney+</div><div class="btn-cmd">launch/<span>291097</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/31440" data-label="Paramount+">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pp2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a1e5a"/><stop offset="100%" stop-color="#040e2e"/></linearGradient><clipPath id="c-pp2"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pp2)" stroke="rgba(60,100,255,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pp2)"/></g><text x="26" y="38" text-anchor="middle" font-size="20" fill="rgba(120,160,255,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P+</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Paramount+</div><div class="btn-cmd">launch/<span>31440</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/593099" data-label="Peacock">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a3a3a"/><stop offset="100%" stop-color="#041a1a"/></linearGradient><clipPath id="c-pc"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pc)" stroke="rgba(60,200,200,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pc)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(80,220,220,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Peacock</div><div class="btn-cmd">launch/<span>593099</span></div><div class="btn-note">verify via /query/apps</div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/61322" data-label="Max">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-mx" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a0a4a"/><stop offset="100%" stop-color="#120420"/></linearGradient><clipPath id="c-mx"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-mx)" stroke="rgba(160,80,255,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-mx)"/></g><text x="26" y="40" text-anchor="middle" font-size="28" fill="rgba(200,140,255,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">M</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Max (HBO)</div><div class="btn-cmd">launch/<span>61322</span></div><div class="btn-note">verify via /query/apps</div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/550060" data-label="Apple TV+">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-atv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a2a2a"/><stop offset="100%" stop-color="#0e0e0e"/></linearGradient><clipPath id="c-atv"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-atv)" stroke="rgba(200,200,200,0.2)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-atv)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(220,220,220,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">A</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Apple TV+</div><div class="btn-cmd">launch/<span>550060</span></div><div class="btn-note">verify via /query/apps</div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/2595" data-label="ESPN">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-es" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a1a3a"/><stop offset="100%" stop-color="#040c1c"/></linearGradient><clipPath id="c-es"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-es)" stroke="rgba(60,120,220,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-es)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(100,160,255,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">E</text></svg></div>
+      <div class="btn-info"><div class="btn-name">ESPN</div><div class="btn-cmd">launch/<span>2595</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/41468" data-label="Tubi">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-tb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a1a2a"/><stop offset="100%" stop-color="#220a14"/></linearGradient><clipPath id="c-tb"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-tb)" stroke="rgba(220,80,120,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-tb)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(255,120,160,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">T</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Tubi</div><div class="btn-cmd">launch/<span>41468</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/74519" data-label="Pluto TV">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a2a3a"/><stop offset="100%" stop-color="#0a121a"/></linearGradient><clipPath id="c-pl"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-pl)" stroke="rgba(80,160,200,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pl)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(120,190,230,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Pluto TV</div><div class="btn-cmd">launch/<span>74519</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/46041" data-label="Sling TV">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-sl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a2a0a"/><stop offset="100%" stop-color="#201204"/></linearGradient><clipPath id="c-sl"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-sl)" stroke="rgba(220,120,40,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-sl)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(255,160,80,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">S</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Sling TV</div><div class="btn-cmd">launch/<span>46041</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/151908" data-label="The Roku Channel">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-rc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a2a4a"/><stop offset="100%" stop-color="#1a1220"/></linearGradient><clipPath id="c-rc"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-rc)" stroke="rgba(160,100,220,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-rc)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(200,160,255,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">R</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Roku Channel</div><div class="btn-cmd">launch/<span>151908</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/195316" data-label="YouTube TV">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-ytv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a2a00"/><stop offset="100%" stop-color="#201200"/></linearGradient><clipPath id="c-ytv"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-ytv)" stroke="rgba(220,140,40,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-ytv)"/></g><text x="26" y="34" text-anchor="middle" font-size="15" fill="rgba(255,185,60,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">YT-TV</text></svg></div>
+      <div class="btn-info"><div class="btn-name">YouTube TV</div><div class="btn-cmd">launch/<span>195316</span></div></div>
+    </div>
+    <div class="btn-row" data-cmd="launch/13535" data-label="Plex">
+      <div class="btn-svg-wrap"><svg class="rbtn" width="52" height="52" viewBox="0 0 52 52"><defs><linearGradient id="g-px" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a2a00"/><stop offset="100%" stop-color="#1a1200"/></linearGradient><clipPath id="c-px"><rect width="52" height="52" rx="8"/></clipPath></defs><g class="bg"><rect width="52" height="52" rx="8" fill="url(#g-px)" stroke="rgba(220,180,40,0.3)" stroke-width="1"/><ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-px)"/></g><text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(255,210,60,0.95)" pointer-events="none" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text></svg></div>
+      <div class="btn-info"><div class="btn-name">Plex</div><div class="btn-cmd">launch/<span>13535</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── KEYBOARD SECTION ENTRY ─────────────────────────────────── -->
+  <div class="section-label">Text Input</div>
+  <div style="display:flex;gap:10px;align-items:center;padding:4px 0 8px;">
+    <button class="bar-btn" onclick="openKeyboard()" style="font-size:12px;padding:8px 18px;">⌨ Open Keyboard</button>
+    <span style="font-size:10px;color:var(--text-hint);">Sends Lit_ keypresses to Roku one character at a time</span>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ── KEYBOARD DRAWER ──────────────────────────────────────────── -->
+<div id="kb-drawer">
+  <div id="kb-header">
+    <span>TEXT INPUT → ROKU</span>
+    <button id="kb-close" onclick="closeKeyboard()">✕</button>
+  </div>
+  <div id="kb-display"><span id="kb-preview"></span><span class="cursor"></span></div>
+  <div id="kb-input-row">
+    <input id="kb-text-input" type="text" placeholder="Type text to send..." autocomplete="off" spellcheck="false">
+    <button id="kb-send-btn" onclick="sendKbText()">Send All</button>
+  </div>
+  <div id="kb-special-row">
+    <button class="kb-special" onclick="sendKbKey('Backspace')">⌫ Backspace</button>
+    <button class="kb-special" onclick="sendKbKey('Enter')">⏎ Enter</button>
+    <button class="kb-special" onclick="sendKbKey('Search')">⌕ Search</button>
+    <button class="kb-special" onclick="clearKbPreview()">Clear display</button>
+  </div>
+</div>
+
+<!-- ── FAB keyboard trigger (mobile/tablet) ───────────────────── -->
+<button id="kb-toggle-fab" onclick="openKeyboard()" title="Open keyboard">⌨</button>
+
+<!-- ── TOAST ─────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const state = {
+  ip: null,
+  connected: false,
+  tier: 'desktop',    // 'desktop' | 'tablet' | 'mobile'
+  kbText: '',         // current keyboard preview buffer
+};
+
+// ═══════════════════════════════════════════════════════════════
+// DEVICE TIER DETECTION
+// ═══════════════════════════════════════════════════════════════
+function detectTier() {
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const touch   = navigator.maxTouchPoints > 0;
+  const ua      = navigator.userAgent;
+  const w       = window.innerWidth;
+
+  let tier = 'desktop';
+  if (coarse || touch) {
+    // tablet: touch device, wider screen
+    tier = (w >= 600) ? 'tablet' : 'mobile';
+  }
+  // UA refinement
+  if (/iPhone|Android.*Mobile|IEMobile/i.test(ua)) tier = 'mobile';
+  if (/iPad|Android(?!.*Mobile)/i.test(ua))         tier = 'tablet';
+
+  state.tier = tier;
+  document.getElementById('app').className = 'tier-' + tier;
+  document.getElementById('device-tier').textContent = tier.toUpperCase();
+}
+
+detectTier();
+window.addEventListener('resize', detectTier);
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ECP COMMAND
+// ═══════════════════════════════════════════════════════════════
+async function sendCmd(cmd, silent = false) {
+  if (!state.ip) {
+    showToast('No Roku connected', 'fail');
+    return false;
+  }
+  const url = `http://${state.ip}:8060/${cmd}`;
+  try {
+    const res = await fetch(url, { method: 'POST', signal: AbortSignal.timeout(2500) });
+    if (!silent) {
+      if (res.ok || res.status === 200) {
+        // silent success — don't spam toast for every button
+      } else {
+        showToast(`Error ${res.status}`, 'fail');
+      }
+    }
+    return res.ok;
+  } catch (e) {
+    if (!silent) showToast('Send failed — check connection', 'fail');
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DEVICE DISCOVERY
+// ═══════════════════════════════════════════════════════════════
+function setStatus(state_, name) {
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('device-name');
+  dot.className = state_;
+  text.innerHTML = name;
+}
+
+async function probeIP(ip) {
+  try {
+    const url = `http://${ip}:8060/query/device-info`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(1800) });
+    if (!res.ok) return null;
+    const xml  = await res.text();
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(xml, 'text/xml');
+    const name   = doc.querySelector('friendly-device-name')?.textContent || 'Roku Device';
+    const model  = doc.querySelector('model-name')?.textContent           || '';
+    return { ip, name, model };
+  } catch { return null; }
+}
+
+async function startDiscovery() {
+  setStatus('searching', 'Scanning LAN...');
+  showToast('Scanning 192.168.1.2–254…');
+
+  // Try saved IP first
+  const saved = localStorage.getItem('roku_ip');
+  if (saved) {
+    const result = await probeIP(saved);
+    if (result) { connectTo(result); return; }
+  }
+
+  // Parallel probe common Roku range
+  const batch = [];
+  for (let i = 2; i <= 254; i++) {
+    batch.push(probeIP(`192.168.1.${i}`));
+  }
+
+  // Process as they resolve
+  let found = false;
+  const results = await Promise.allSettled(batch);
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value) {
+      connectTo(r.value);
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    setStatus('error', 'No Roku found — enter IP manually');
+    showToast('No Roku found on 192.168.1.x', 'fail');
+  }
+}
+
+function connectTo({ ip, name, model }) {
+  state.ip        = ip;
+  state.connected = true;
+  localStorage.setItem('roku_ip', ip);
+  document.getElementById('ip-input').value = ip;
+  setStatus('connected', `<b>${name}</b> &nbsp;·&nbsp; ${model} &nbsp;·&nbsp; ${ip}`);
+  showToast(`Connected: ${name}`, 'ok');
+}
+
+async function connectManual() {
+  const val = document.getElementById('ip-input').value.trim();
+  if (!val) { showToast('Enter an IP address', 'fail'); return; }
+  setStatus('searching', `Connecting to ${val}…`);
+  const result = await probeIP(val);
+  if (result) {
+    connectTo(result);
+  } else {
+    setStatus('error', `Cannot reach ${val}`);
+    // Still allow using it (user might want to try anyway)
+    state.ip = val;
+    showToast(`Could not verify ${val} — using anyway`, 'fail');
+  }
+}
+
+// Auto-attempt on load
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('roku_ip');
+  if (saved) {
+    document.getElementById('ip-input').value = saved;
+    probeIP(saved).then(r => {
+      if (r) connectTo(r);
+      else   setStatus('error', `Saved IP ${saved} unreachable — rescan or re-enter`);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// POINTER EVENTS — unified mouse + touch, with hold-repeat
+// ═══════════════════════════════════════════════════════════════
+const HOLD_DELAY  = 400;   // ms before repeat starts
+const HOLD_RATE   = 180;   // ms between repeats
+const HAPTIC_SOFT = [10];  // vibrate pattern for tap
+const HAPTIC_HOLD = [5];   // vibrate for each repeat tick
+
+let holdTimer   = null;
+let holdInterval = null;
+let activeRow   = null;
+
+function startHold(row, cmd) {
+  holdTimer = setTimeout(() => {
+    row.classList.add('repeat-active');
+    animateHoldBar(row);
+    if (navigator.vibrate) navigator.vibrate(HAPTIC_HOLD);
+    sendCmd(cmd, true);
+    holdInterval = setInterval(() => {
+      if (navigator.vibrate) navigator.vibrate(HAPTIC_HOLD);
+      sendCmd(cmd, true);
+    }, HOLD_RATE);
+  }, HOLD_DELAY);
+}
+
+function cancelHold(row, cmd, didHold) {
+  clearTimeout(holdTimer);
+  clearInterval(holdInterval);
+  holdTimer    = null;
+  holdInterval = null;
+  row.classList.remove('repeat-active', 'active');
+  resetHoldBar(row);
+
+  if (!didHold) {
+    // It was a tap — fire once
+    if (navigator.vibrate) navigator.vibrate(HAPTIC_SOFT);
+    flashRow(row);
+    sendCmd(cmd).then(ok => {
+      if (!ok && state.ip) showToast(`✗ ${row.dataset.label || cmd}`, 'fail');
+    });
+  }
+}
+
+function flashRow(row) {
+  row.classList.remove('flash');
+  void row.offsetWidth;
+  row.classList.add('flash');
+  setTimeout(() => row.classList.remove('flash'), 250);
+}
+
+function animateHoldBar(row) {
+  const bar = row.querySelector('.hold-bar');
+  if (!bar) return;
+  bar.style.transition = `width ${HOLD_DELAY * 8}ms linear`;
+  bar.style.width = '100%';
+}
+
+function resetHoldBar(row) {
+  const bar = row.querySelector('.hold-bar');
+  if (!bar) return;
+  bar.style.transition = 'none';
+  bar.style.width = '0';
+}
+
+// Attach to all .btn-row elements
+document.querySelectorAll('.btn-row').forEach(row => {
+  const cmd      = row.dataset.cmd;
+  const canRepeat = row.dataset.repeat === 'true';
+  if (!cmd) return;
+
+  let didHold = false;
+
+  row.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    row.setPointerCapture(e.pointerId);
+    row.classList.add('active');
+    didHold = false;
+    activeRow = row;
+
+    if (canRepeat) {
+      startHold(row, cmd);
+    }
+  });
+
+  row.addEventListener('pointerup', e => {
+    e.preventDefault();
+    const wasHolding = holdInterval !== null;
+    didHold = wasHolding;
+    cancelHold(row, cmd, wasHolding);
+    activeRow = null;
+  });
+
+  row.addEventListener('pointercancel', e => {
+    cancelHold(row, cmd, true); // treat cancel as hold-end, no tap fire
+    activeRow = null;
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS  (desktop only)
+// ═══════════════════════════════════════════════════════════════
+const KB_MAP = {
+  'ArrowUp':    'keypress/Up',
+  'ArrowDown':  'keypress/Down',
+  'ArrowLeft':  'keypress/Left',
+  'ArrowRight': 'keypress/Right',
+  'Enter':      'keypress/Select',
+  'Escape':     'keypress/Back',
+  ' ':          'keypress/Play',
+  'h':          'keypress/Home',
+  'H':          'keypress/Home',
+  'i':          'keypress/Info',
+  'I':          'keypress/Info',
+  's':          'keypress/Search',
+  'S':          'keypress/Search',
+  'm':          'keypress/VolumeMute',
+  'M':          'keypress/VolumeMute',
+  '+':          'keypress/VolumeUp',
+  '=':          'keypress/VolumeUp',
+  '-':          'keypress/VolumeDown',
+};
+
+document.addEventListener('keydown', e => {
+  if (state.tier !== 'desktop') return;
+  // Don't fire if user is typing in an input
+  if (e.target.tagName === 'INPUT') return;
+  const cmd = KB_MAP[e.key];
+  if (cmd) {
+    e.preventDefault();
+    sendCmd(cmd);
+    showToast(`→ ${cmd.split('/')[1]}`, 'ok');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD DRAWER
+// ═══════════════════════════════════════════════════════════════
+function openKeyboard() {
+  document.getElementById('kb-drawer').classList.add('open');
+  setTimeout(() => document.getElementById('kb-text-input').focus(), 100);
+}
+
+function closeKeyboard() {
+  document.getElementById('kb-drawer').classList.remove('open');
+}
+
+function updateKbPreview() {
+  document.getElementById('kb-preview').textContent = state.kbText;
+}
+
+function clearKbPreview() {
+  state.kbText = '';
+  updateKbPreview();
+}
+
+async function sendKbText() {
+  const input = document.getElementById('kb-text-input');
+  const text  = input.value;
+  if (!text) return;
+
+  // Send each character sequentially — avoids race condition
+  for (const char of text) {
+    const encoded = encodeURIComponent(char);
+    await sendCmd(`keypress/Lit_${encoded}`, true);
+    state.kbText += char;
+    updateKbPreview();
+    await sleep(60); // small gap to avoid buffer overflow on device
+  }
+
+  input.value = '';
+  showToast(`Sent: "${text}"`, 'ok');
+}
+
+async function sendKbKey(key) {
+  await sendCmd(`keypress/${key}`);
+  if (key === 'Backspace' && state.kbText.length > 0) {
+    state.kbText = state.kbText.slice(0, -1);
+    updateKbPreview();
+  }
+}
+
+// Live character sending as user types (optional — fires on each keystroke)
+document.getElementById('kb-text-input').addEventListener('keydown', async e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    await sendKbText();
+  }
+});
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+</script>
+</body>
+</html>
