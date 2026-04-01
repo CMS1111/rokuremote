@@ -1,1 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roku ECP Button Reference</title>
+<link rel="stylesheet" href="glass-button.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  body {
+    background: #0e0e1a;
+    background-image:
+      radial-gradient(ellipse at 10% 10%, #151528 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 90%, #0a1520 0%, transparent 50%);
+    min-height: 100vh;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    color: #666;
+    padding: 48px 24px 100px;
+  }
+
+  h1 {
+    font-size: 14px; font-weight: 500; color: #444;
+    letter-spacing: 0.14em; margin-bottom: 4px;
+  }
+  .sub {
+    font-size: 11px; color: #2a2a3e; letter-spacing: 0.06em;
+    margin-bottom: 52px; line-height: 2;
+  }
+  .sub b { color: #333; font-weight: 500; }
+
+  /* section headers */
+  .section-title {
+    font-size: 10px; letter-spacing: 0.18em; color: #222;
+    text-transform: uppercase;
+    border-bottom: 1px solid #151525;
+    padding-bottom: 8px; margin: 48px 0 20px;
+  }
+  .section-title:first-of-type { margin-top: 0; }
+
+  /* button grid */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  /* each row = one button entry */
+  .btn-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255,255,255,0.018);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: default;
+  }
+  .btn-row:hover {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.07);
+  }
+
+  .btn-svg-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+  }
+
+  .btn-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .btn-name {
+    font-size: 12px; font-weight: 500; color: #555;
+    letter-spacing: 0.04em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .btn-cmd {
+    font-size: 10px; color: #2a2a42;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    letter-spacing: 0.03em;
+  }
+  .btn-cmd span { color: #333; }
+
+  /* note tag */
+  .note {
+    font-size: 9px; color: #1e1e30; letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* ── SVG button base styles ──────────────────────────────────── */
+  .rbtn {
+    cursor: pointer;
+    overflow: visible;
+  }
+  .rbtn .bg { transition: filter 0.12s; }
+  .rbtn:hover .bg { filter: brightness(1.25); }
+  .rbtn:active .bg { filter: brightness(0.8); }
+
+  /* fired flash */
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .rbtn.fired .bg { animation: flash 0.25s ease; }
+</style>
+</head>
+<body>
+
+<h1>ROKU ECP — COMPLETE BUTTON REFERENCE</h1>
+<p class="sub">
+  All buttons use <b>Technique E</b> — SVG &lt;text&gt; glyph with pointer-events:fill · glass arc via native &lt;ellipse&gt; + &lt;clipPath&gt;<br>
+  Navigation: <b>POST http://[roku-ip]:8060/keypress/[ID]</b> · Apps: <b>POST http://[roku-ip]:8060/launch/[ID]</b><br>
+  <b>★</b> = TV-only (Roku TV with built-in tuner) · IDs are global constants, not device-specific
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Navigation</div>
+<div class="btn-grid">
+
+  <!-- UP -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-up" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-up"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-up)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-up)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="30" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">▲</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Up</div>
+      <div class="btn-cmd">keypress/<span>Up</span></div>
+    </div>
+  </div>
+
+  <!-- DOWN -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-dn" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-dn"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-dn)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-dn)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="30" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">▼</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Down</div>
+      <div class="btn-cmd">keypress/<span>Down</span></div>
+    </div>
+  </div>
+
+  <!-- LEFT -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-lt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-lt"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-lt)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-lt)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="30" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">◀</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Left</div>
+      <div class="btn-cmd">keypress/<span>Left</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-rt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-rt"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-rt)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-rt)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="30" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">▶</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Right</div>
+      <div class="btn-cmd">keypress/<span>Right</span></div>
+    </div>
+  </div>
+
+  <!-- SELECT -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-sel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a4a2a"/><stop offset="100%" stop-color="#0e1e0e"/>
+          </linearGradient>
+          <clipPath id="c-sel"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-sel)" stroke="rgba(100,220,100,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-sel)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(150,255,150,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⊙</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Select / OK</div>
+      <div class="btn-cmd">keypress/<span>Select</span></div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-hm" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-hm"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-hm)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-hm)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⌂</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Home</div>
+      <div class="btn-cmd">keypress/<span>Home</span></div>
+    </div>
+  </div>
+
+  <!-- BACK -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-bk" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-bk"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-bk)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-bk)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">↩</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Back</div>
+      <div class="btn-cmd">keypress/<span>Back</span></div>
+    </div>
+  </div>
+
+  <!-- INFO / OPTIONS -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-inf" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-inf"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-inf)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-inf)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">☰</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Info / Options</div>
+      <div class="btn-cmd">keypress/<span>Info</span></div>
+      <div class="note">also opens options menu</div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-srch" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-srch"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-srch)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-srch)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⌕</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Search</div>
+      <div class="btn-cmd">keypress/<span>Search</span></div>
+    </div>
+  </div>
+
+  <!-- INSTANT REPLAY -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-ir" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-ir"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-ir)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-ir)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">↺</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Instant Replay</div>
+      <div class="btn-cmd">keypress/<span>InstantReplay</span></div>
+      <div class="note">back 10s</div>
+    </div>
+  </div>
+
+  <!-- ENTER -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-en" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-en"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-en)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-en)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏎</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Enter</div>
+      <div class="btn-cmd">keypress/<span>Enter</span></div>
+      <div class="note">confirms keyboard input</div>
+    </div>
+  </div>
+
+  <!-- BACKSPACE -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-bs" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-bs"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-bs)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-bs)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⌫</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Backspace</div>
+      <div class="btn-cmd">keypress/<span>Backspace</span></div>
+    </div>
+  </div>
+
+</div><!-- /nav grid -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PLAYBACK
+══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Playback</div>
+<div class="btn-grid">
+
+  <!-- PLAY/PAUSE -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pp" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a4a3a"/><stop offset="100%" stop-color="#0e1e16"/>
+          </linearGradient>
+          <clipPath id="c-pp"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pp)" stroke="rgba(100,220,160,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pp)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(120,255,180,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏯</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Play / Pause</div>
+      <div class="btn-cmd">keypress/<span>Play</span></div>
+    </div>
+  </div>
+
+  <!-- REWIND -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-rw" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-rw"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-rw)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-rw)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏪</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Rewind</div>
+      <div class="btn-cmd">keypress/<span>Rev</span></div>
+    </div>
+  </div>
+
+  <!-- FAST FORWARD -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-ff" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-ff"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-ff)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-ff)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏩</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Fast Forward</div>
+      <div class="btn-cmd">keypress/<span>Fwd</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     VOLUME & POWER  (TV-only = built-in Roku TV)
+══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Volume &amp; Power <span style="font-size:9px;color:#1e1e30;">— ★ TV-only keys</span></div>
+<div class="btn-grid">
+
+  <!-- VOLUME UP -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-vu" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/>
+          </linearGradient>
+          <clipPath id="c-vu"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-vu)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-vu)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(150,200,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">🔊</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Volume Up ★</div>
+      <div class="btn-cmd">keypress/<span>VolumeUp</span></div>
+    </div>
+  </div>
+
+  <!-- VOLUME DOWN -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-vd" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/>
+          </linearGradient>
+          <clipPath id="c-vd"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-vd)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-vd)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(150,200,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">🔉</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Volume Down ★</div>
+      <div class="btn-cmd">keypress/<span>VolumeDown</span></div>
+    </div>
+  </div>
+
+  <!-- MUTE -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-mt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/>
+          </linearGradient>
+          <clipPath id="c-mt"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-mt)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-mt)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(150,200,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">🔇</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Mute ★</div>
+      <div class="btn-cmd">keypress/<span>VolumeMute</span></div>
+    </div>
+  </div>
+
+  <!-- POWER -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pw" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5a1e1e"/><stop offset="100%" stop-color="#2e0a0a"/>
+          </linearGradient>
+          <clipPath id="c-pw"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pw)" stroke="rgba(255,100,100,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pw)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(255,150,150,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏻</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Power Toggle ★</div>
+      <div class="btn-cmd">keypress/<span>Power</span></div>
+    </div>
+  </div>
+
+  <!-- POWER ON -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pon" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a5a1e"/><stop offset="100%" stop-color="#0e2a0a"/>
+          </linearGradient>
+          <clipPath id="c-pon"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pon)" stroke="rgba(100,220,100,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pon)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(120,255,120,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏼</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Power On ★</div>
+      <div class="btn-cmd">keypress/<span>PowerOn</span></div>
+    </div>
+  </div>
+
+  <!-- POWER OFF -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pof" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5a1e1e"/><stop offset="100%" stop-color="#2e0a0a"/>
+          </linearGradient>
+          <clipPath id="c-pof"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pof)" stroke="rgba(255,100,100,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pof)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="22" fill="rgba(255,120,120,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">⏽</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Power Off ★</div>
+      <div class="btn-cmd">keypress/<span>PowerOff</span></div>
+    </div>
+  </div>
+
+  <!-- CHANNEL UP -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-cu" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/>
+          </linearGradient>
+          <clipPath id="c-cu"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-cu)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-cu)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="14" fill="rgba(150,200,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">CH▲</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Channel Up ★</div>
+      <div class="btn-cmd">keypress/<span>ChannelUp</span></div>
+    </div>
+  </div>
+
+  <!-- CHANNEL DOWN -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-cd" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e3a5a"/><stop offset="100%" stop-color="#0a1a2e"/>
+          </linearGradient>
+          <clipPath id="c-cd"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-cd)" stroke="rgba(100,160,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-cd)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="14" fill="rgba(150,200,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">CH▼</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Channel Down ★</div>
+      <div class="btn-cmd">keypress/<span>ChannelDown</span></div>
+    </div>
+  </div>
+
+  <!-- FIND REMOTE -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-fr" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3a4a"/><stop offset="100%" stop-color="#1e1e2e"/>
+          </linearGradient>
+          <clipPath id="c-fr"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-fr)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-fr)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(210,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">📡</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Find Remote</div>
+      <div class="btn-cmd">keypress/<span>FindRemote</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HDMI INPUTS  (TV-only)
+══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">HDMI Inputs <span style="font-size:9px;color:#1e1e30;">— ★ TV-only keys</span></div>
+<div class="btn-grid">
+
+  <!-- helper macro rendered inline for each HDMI -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-h1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/>
+          </linearGradient>
+          <clipPath id="c-h1"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-h1)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h1)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="15" fill="rgba(160,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">HDMI1</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">HDMI 1 ★</div>
+      <div class="btn-cmd">keypress/<span>InputHDMI1</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-h2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/>
+          </linearGradient>
+          <clipPath id="c-h2"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-h2)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h2)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="15" fill="rgba(160,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">HDMI2</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">HDMI 2 ★</div>
+      <div class="btn-cmd">keypress/<span>InputHDMI2</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-h3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/>
+          </linearGradient>
+          <clipPath id="c-h3"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-h3)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h3)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="15" fill="rgba(160,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">HDMI3</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">HDMI 3 ★</div>
+      <div class="btn-cmd">keypress/<span>InputHDMI3</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-h4" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/>
+          </linearGradient>
+          <clipPath id="c-h4"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-h4)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-h4)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="15" fill="rgba(160,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">HDMI4</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">HDMI 4 ★</div>
+      <div class="btn-cmd">keypress/<span>InputHDMI4</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-av" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/>
+          </linearGradient>
+          <clipPath id="c-av"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-av)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-av)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="18" fill="rgba(160,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;font-weight:500;">AV</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">AV Input ★</div>
+      <div class="btn-cmd">keypress/<span>InputAV1</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-tv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a3a4a"/><stop offset="100%" stop-color="#0e1a26"/>
+          </linearGradient>
+          <clipPath id="c-tv"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-tv)" stroke="rgba(120,180,255,0.25)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-tv)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="24" fill="rgba(160,210,255,0.9)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">📺</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Tuner ★</div>
+      <div class="btn-cmd">keypress/<span>InputTuner</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STREAMING APPS  — launch/[id]
+     Colors are interpretive, not exact brand colors
+══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Streaming Apps — launch/[id]</div>
+<div class="btn-grid">
+
+  <!-- NETFLIX — deep crimson, N glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-nf" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6a1010"/><stop offset="100%" stop-color="#300808"/>
+          </linearGradient>
+          <clipPath id="c-nf"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-nf)" stroke="rgba(220,80,80,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-nf)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="34" fill="rgba(255,140,140,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">N</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Netflix</div>
+      <div class="btn-cmd">launch/<span>12</span></div>
+    </div>
+  </div>
+
+  <!-- YOUTUBE — deep amber/golden, ▶ glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-yt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5a3a00"/><stop offset="100%" stop-color="#2a1a00"/>
+          </linearGradient>
+          <clipPath id="c-yt"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-yt)" stroke="rgba(220,160,40,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-yt)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="26" fill="rgba(255,200,80,0.95)" pointer-events="fill" style="font-family:system-ui,sans-serif;user-select:none;">▶</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">YouTube</div>
+      <div class="btn-cmd">launch/<span>837</span></div>
+    </div>
+  </div>
+
+  <!-- PRIME VIDEO — deep steel blue, P glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0a2a4a"/><stop offset="100%" stop-color="#041220"/>
+          </linearGradient>
+          <clipPath id="c-pv"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pv)" stroke="rgba(60,160,220,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pv)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(80,180,255,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Prime Video</div>
+      <div class="btn-cmd">launch/<span>13</span></div>
+    </div>
+  </div>
+
+  <!-- HULU — forest green, H glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-hu" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0e3a1a"/><stop offset="100%" stop-color="#061a0c"/>
+          </linearGradient>
+          <clipPath id="c-hu"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-hu)" stroke="rgba(60,200,100,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-hu)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(80,220,120,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">H</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Hulu</div>
+      <div class="btn-cmd">launch/<span>2285</span></div>
+    </div>
+  </div>
+
+  <!-- DISNEY+ — deep indigo, D+ glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-dp" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0e1a5a"/><stop offset="100%" stop-color="#060a2e"/>
+          </linearGradient>
+          <clipPath id="c-dp"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-dp)" stroke="rgba(80,120,255,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-dp)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="20" fill="rgba(140,180,255,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">D+</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Disney+</div>
+      <div class="btn-cmd">launch/<span>291097</span></div>
+    </div>
+  </div>
+
+  <!-- PARAMOUNT+ — deep cobalt, P+ glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pp2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0a1e5a"/><stop offset="100%" stop-color="#040e2e"/>
+          </linearGradient>
+          <clipPath id="c-pp2"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pp2)" stroke="rgba(60,100,255,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pp2)"/>
+        </g>
+        <text x="26" y="38" text-anchor="middle" font-size="20" fill="rgba(120,160,255,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P+</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Paramount+</div>
+      <div class="btn-cmd">launch/<span>31440</span></div>
+    </div>
+  </div>
+
+  <!-- PEACOCK — deep teal, P glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pc" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0a3a3a"/><stop offset="100%" stop-color="#041a1a"/>
+          </linearGradient>
+          <clipPath id="c-pc"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pc)" stroke="rgba(60,200,200,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pc)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(80,220,220,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Peacock</div>
+      <div class="btn-cmd">launch/<span>593099</span></div>
+      <div class="note">confirmed via /query/apps</div>
+    </div>
+  </div>
+
+  <!-- HBO MAX / MAX — deep purple, M glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-mx" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a0a4a"/><stop offset="100%" stop-color="#120420"/>
+          </linearGradient>
+          <clipPath id="c-mx"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-mx)" stroke="rgba(160,80,255,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-mx)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(200,140,255,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">M</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Max (HBO)</div>
+      <div class="btn-cmd">launch/<span>61322</span></div>
+      <div class="note">use /query/apps to verify</div>
+    </div>
+  </div>
+
+  <!-- APPLE TV+ — silver/steel, A glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-atv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a2a2a"/><stop offset="100%" stop-color="#0e0e0e"/>
+          </linearGradient>
+          <clipPath id="c-atv"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-atv)" stroke="rgba(200,200,200,0.2)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-atv)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(220,220,220,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">A</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Apple TV+</div>
+      <div class="btn-cmd">launch/<span>550060</span></div>
+      <div class="note">use /query/apps to verify</div>
+    </div>
+  </div>
+
+  <!-- ESPN — deep charcoal/navy, E glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-es" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0a1a3a"/><stop offset="100%" stop-color="#040c1c"/>
+          </linearGradient>
+          <clipPath id="c-es"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-es)" stroke="rgba(60,120,220,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-es)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="30" fill="rgba(100,160,255,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">E</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">ESPN</div>
+      <div class="btn-cmd">launch/<span>2595</span></div>
+    </div>
+  </div>
+
+  <!-- TUBI — deep rose/maroon, T glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-tb" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4a1a2a"/><stop offset="100%" stop-color="#220a14"/>
+          </linearGradient>
+          <clipPath id="c-tb"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-tb)" stroke="rgba(220,80,120,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-tb)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(255,120,160,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">T</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Tubi</div>
+      <div class="btn-cmd">launch/<span>41468</span></div>
+    </div>
+  </div>
+
+  <!-- PLUTO TV — deep slate, P glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-pl" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1a2a3a"/><stop offset="100%" stop-color="#0a121a"/>
+          </linearGradient>
+          <clipPath id="c-pl"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-pl)" stroke="rgba(80,160,200,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-pl)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(120,190,230,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Pluto TV</div>
+      <div class="btn-cmd">launch/<span>74519</span></div>
+    </div>
+  </div>
+
+  <!-- SLING TV — deep orange-brown, S glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-sl" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4a2a0a"/><stop offset="100%" stop-color="#201204"/>
+          </linearGradient>
+          <clipPath id="c-sl"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-sl)" stroke="rgba(220,120,40,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-sl)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(255,160,80,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">S</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Sling TV</div>
+      <div class="btn-cmd">launch/<span>46041</span></div>
+    </div>
+  </div>
+
+  <!-- THE ROKU CHANNEL — deep purple-grey, R glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-rc" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a2a4a"/><stop offset="100%" stop-color="#1a1220"/>
+          </linearGradient>
+          <clipPath id="c-rc"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-rc)" stroke="rgba(160,100,220,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-rc)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(200,160,255,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">R</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">The Roku Channel</div>
+      <div class="btn-cmd">launch/<span>151908</span></div>
+    </div>
+  </div>
+
+  <!-- YOUTUBE TV — dark amber, ytv glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-ytv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4a2a00"/><stop offset="100%" stop-color="#201200"/>
+          </linearGradient>
+          <clipPath id="c-ytv"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-ytv)" stroke="rgba(220,140,40,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-ytv)"/>
+        </g>
+        <text x="26" y="36" text-anchor="middle" font-size="16" fill="rgba(255,185,60,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">YT-TV</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">YouTube TV</div>
+      <div class="btn-cmd">launch/<span>195316</span></div>
+    </div>
+  </div>
+
+  <!-- PLEX — deep warm dark, P glyph -->
+  <div class="btn-row">
+    <div class="btn-svg-wrap">
+      <svg class="rbtn" width="52" height="52" viewBox="0 0 52 52" onclick="flash(this)">
+        <defs>
+          <linearGradient id="g-px" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a2a00"/><stop offset="100%" stop-color="#1a1200"/>
+          </linearGradient>
+          <clipPath id="c-px"><rect width="52" height="52" rx="8"/></clipPath>
+        </defs>
+        <g class="bg">
+          <rect width="52" height="52" rx="8" fill="url(#g-px)" stroke="rgba(220,180,40,0.3)" stroke-width="1"/>
+          <ellipse cx="26" cy="-13" rx="34" ry="26" fill="white" opacity="0.29" clip-path="url(#c-px)"/>
+        </g>
+        <text x="26" y="40" text-anchor="middle" font-size="32" fill="rgba(255,210,60,0.95)" pointer-events="fill" style="font-family:Georgia,serif;font-weight:700;user-select:none;">P</text>
+      </svg>
+    </div>
+    <div class="btn-info">
+      <div class="btn-name">Plex</div>
+      <div class="btn-cmd">launch/<span>13535</span></div>
+    </div>
+  </div>
+
+</div><!-- /streaming grid -->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     NOTES
+══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Notes on App IDs</div>
+<div style="font-size:11px; color:#2a2a3e; line-height:2.2; max-width:700px;">
+  <p>App IDs are <b style="color:#333;">global constants</b> stored on Roku's servers — not device-specific. They are the same across all Roku devices worldwide.</p>
+  <p style="margin-top:8px;"><b style="color:#333;">To get IDs for any app installed on your Roku</b> (including ones not listed here), send:<br>
+  <span style="color:#333;">GET http://[roku-ip]:8060/query/apps</span><br>
+  This returns an XML list of every installed channel with its numeric ID.</p>
+  <p style="margin-top:8px;"><b style="color:#333;">IDs marked "use /query/apps to verify"</b> — Max and Apple TV+ IDs have varied across device generations. Confirm against your device's live response.</p>
+  <p style="margin-top:8px;"><b style="color:#333;">Keyboard input</b> — send individual characters via: keypress/Lit_[char] (e.g. Lit_a, Lit_3). URL-encode for non-ASCII. Use Backspace + Enter for field control.</p>
+</div>
+
+<script>
+  function flash(el) {
+    el.classList.remove('fired');
+    void el.offsetWidth; // reflow
+    el.classList.add('fired');
+    setTimeout(() => el.classList.remove('fired'), 300);
+  }
+</script>
+</body>
+</html>
